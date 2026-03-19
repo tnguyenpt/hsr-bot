@@ -20,6 +20,25 @@ def ensure_dirs(settings: Dict[str, Any]) -> None:
 
 
 def template_path(settings: Dict[str, Any], key: str) -> str:
-    base = settings["templates"]["base_dir"]
+    """Resolve template path across WSL/Linux and native Windows runs."""
     filename = settings["templates"][key]
-    return str(Path(base) / filename)
+    templates_cfg = settings.get("templates", {})
+
+    candidates = []
+
+    # Preferred by runtime platform
+    if os.name == "nt" and templates_cfg.get("windows_base_dir"):
+        candidates.append(str(Path(templates_cfg["windows_base_dir"]) / filename))
+    if templates_cfg.get("base_dir"):
+        candidates.append(str(Path(templates_cfg["base_dir"]) / filename))
+
+    # Cross-platform fallback candidate
+    if templates_cfg.get("windows_base_dir"):
+        candidates.append(str(Path(templates_cfg["windows_base_dir"]) / filename))
+
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+
+    # Return the first candidate even if missing; caller will report low confidence.
+    return candidates[0] if candidates else filename

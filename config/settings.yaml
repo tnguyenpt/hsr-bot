@@ -13,7 +13,10 @@ retry:
   template_poll_interval_sec: 1.0
 
 templates:
+  # WSL/Linux path
   base_dir: /mnt/c/Users/Clawed/Pictures/hsr-templates
+  # Native Windows path fallback (used when running via PowerShell)
+  windows_base_dir: C:\Users\Clawed\Pictures\hsr-templates
   hoyoplay_launcher: hoyoplay_launcher.png
   hoyoplay_start_button: hoyoplay_launcher_start_button.png
   saved_info_login: saved_info_login_screen.png
