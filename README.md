@@ -61,6 +61,14 @@ pip install -r requirements.txt
 python main.py --run launch_mvp
 ```
 
+### Stage A reliability test (launch/login/ready/close loop)
+
+```bash
+python main.py --run stage_a --loops 10
+```
+
+This runs 10 repeated cycles and reports pass/fail summary.
+
 ## Environment variables
 
 - `HSR_USERNAME` (optional; only if login prompt appears)

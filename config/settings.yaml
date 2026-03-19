@@ -34,6 +34,22 @@ launch:
   launcher_exe: 'C:\Program Files\HoYoPlay\launcher.exe'
   hold_alt_before_in_game_clicks: true
 
+stage_a:
+  loops: 10
+  cooldown_sec: 5
+  stop_on_first_failure: true
+
+safety:
+  safe_mode: true
+  allow_spend: false
+  risky_screen_abort: true
+  max_runtime_min: 30
+
+close:
+  process_names:
+    - StarRail.exe
+    - launcher.exe
+
 telegram:
   notify_on_success: true
   notify_on_failure: true

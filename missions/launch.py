@@ -69,6 +69,34 @@ def _attempt_login(settings: dict) -> bool:
     return True
 
 
+def close_hsr_apps(settings: dict) -> tuple[bool, str]:
+    """Best-effort close for HSR and launcher processes on Windows."""
+    process_names = settings.get("close", {}).get("process_names", ["StarRail.exe", "launcher.exe"])
+    errors: list[str] = []
+
+    for proc in process_names:
+        try:
+            # Works from WSL when cmd.exe is available.
+            result = subprocess.run(
+                ["cmd.exe", "/c", "taskkill", "/IM", proc, "/F"],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode not in (0, 128, 255):
+                # 128/255 can occur when process is not found depending on environment.
+                stderr = (result.stderr or "").strip()
+                stdout = (result.stdout or "").strip()
+                combined = stderr or stdout
+                if "not found" not in combined.lower() and "no running instance" not in combined.lower():
+                    errors.append(f"{proc}: {combined or 'taskkill failed'}")
+        except Exception as exc:
+            errors.append(f"{proc}: {exc}")
+
+    if errors:
+        return False, "; ".join(errors)
+    return True, "Closed target processes"
+
+
 def run_launch_mvp(settings: dict) -> tuple[bool, str]:
     screenshot_dir = settings["app"]["screenshot_dir"]
     ui_thr = float(settings["match_thresholds"]["ui_screen"])
