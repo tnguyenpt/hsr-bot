@@ -41,13 +41,17 @@ def preflight_check() -> tuple[bool, str]:
         "PIL",
     ]
     missing = []
+    import_errors: list[str] = []
+
     for mod in required:
         try:
             importlib.import_module(mod)
-        except Exception:
+        except ModuleNotFoundError:
             missing.append(mod)
+        except Exception as exc:
+            import_errors.append(f"{mod}: {exc}")
 
-    if not missing:
+    if not missing and not import_errors:
         return True, "Runtime dependencies OK"
 
     pip_names = {
@@ -57,14 +61,21 @@ def preflight_check() -> tuple[bool, str]:
         "yaml": "PyYAML",
         "PIL": "Pillow",
     }
-    install_list = " ".join(pip_names[m] for m in missing)
-    guidance = (
-        "Missing Python modules: " + ", ".join(missing) + "\n"
-        "Install with:\n"
-        "  python -m pip install " + install_list + "\n"
-        "(or: pip install -r requirements.txt)"
-    )
-    return False, guidance
+
+    lines = []
+    if missing:
+        install_list = " ".join(pip_names[m] for m in missing)
+        lines.append("Missing Python modules: " + ", ".join(missing))
+        lines.append("Install with:")
+        lines.append("  python -m pip install " + install_list)
+        lines.append("(or: pip install -r requirements.txt)")
+
+    if import_errors:
+        lines.append("Modules installed but failed to import at runtime:")
+        lines.extend(f"  - {x}" for x in import_errors)
+        lines.append("If running in WSL, ensure GUI/display env is available (DISPLAY/WAYLAND).")
+
+    return False, "\n".join(lines)
 
 
 def main() -> int:
