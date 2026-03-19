@@ -112,17 +112,21 @@ def run_launch_mvp(settings: dict) -> tuple[bool, str]:
         return False, f"Failed to launch HoYoPlay: {exc}"
 
     launcher_thr = float(settings.get("match_thresholds", {}).get("launcher_screen", ui_thr))
-    ok, _, conf = _wait_for_template(settings, "hoyoplay_launcher", launcher_thr, int(settings["timeouts"]["launcher_visible_sec"]))
+    # Optional telemetry: launcher shell match (non-blocking)
+    ok, _, conf = _wait_for_template(settings, "hoyoplay_launcher", launcher_thr, 5)
     if not ok:
-        # Fallback: launcher visual may vary, but Start button is often stable.
-        logger.warning("Launcher template not detected (max conf=%.3f); trying Start button fallback", conf)
-        start_ok, _, start_conf = _wait_for_template(settings, "hoyoplay_start_button", btn_thr, 10)
-        if not start_ok:
-            timestamped_screenshot(screenshot_dir, "launcher-missing")
-            return False, (
-                f"HoYoPlay launcher not detected (max conf={conf:.3f}); "
-                f"Start button fallback also failed (max conf={start_conf:.3f})"
-            )
+        logger.warning("Launcher shell template weak/not found (max conf=%.3f); proceeding with Start-button-first flow", conf)
+
+    # Primary anchor: Start Game button
+    start_ok, _, start_conf = _wait_for_template(
+        settings,
+        "hoyoplay_start_button",
+        btn_thr,
+        int(settings["timeouts"]["launcher_visible_sec"]),
+    )
+    if not start_ok:
+        timestamped_screenshot(screenshot_dir, "start-button-missing")
+        return False, f"Start button not found (max conf={start_conf:.3f})"
 
     login_detected, _, login_conf = _wait_for_template(settings, "saved_info_login", ui_thr, 2)
     if not login_detected:
@@ -135,10 +139,11 @@ def run_launch_mvp(settings: dict) -> tuple[bool, str]:
             return False, "Login required but credentials missing"
         time.sleep(3)
 
-    ok, center, conf = _wait_for_template(settings, "hoyoplay_start_button", btn_thr, 20)
+    # Re-resolve Start button after optional login transition
+    ok, center, conf = _wait_for_template(settings, "hoyoplay_start_button", btn_thr, 10)
     if not ok or not center:
         timestamped_screenshot(screenshot_dir, "start-button-missing")
-        return False, f"Start button not found (max conf={conf:.3f})"
+        return False, f"Start button not found after login check (max conf={conf:.3f})"
 
     logger.info("Clicking HoYoPlay start button")
     _click(center)
