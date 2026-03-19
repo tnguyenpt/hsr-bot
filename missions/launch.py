@@ -114,8 +114,15 @@ def run_launch_mvp(settings: dict) -> tuple[bool, str]:
     launcher_thr = float(settings.get("match_thresholds", {}).get("launcher_screen", ui_thr))
     ok, _, conf = _wait_for_template(settings, "hoyoplay_launcher", launcher_thr, int(settings["timeouts"]["launcher_visible_sec"]))
     if not ok:
-        timestamped_screenshot(screenshot_dir, "launcher-missing")
-        return False, f"HoYoPlay launcher not detected (max conf={conf:.3f})"
+        # Fallback: launcher visual may vary, but Start button is often stable.
+        logger.warning("Launcher template not detected (max conf=%.3f); trying Start button fallback", conf)
+        start_ok, _, start_conf = _wait_for_template(settings, "hoyoplay_start_button", btn_thr, 10)
+        if not start_ok:
+            timestamped_screenshot(screenshot_dir, "launcher-missing")
+            return False, (
+                f"HoYoPlay launcher not detected (max conf={conf:.3f}); "
+                f"Start button fallback also failed (max conf={start_conf:.3f})"
+            )
 
     login_detected, _, login_conf = _wait_for_template(settings, "saved_info_login", ui_thr, 2)
     if not login_detected:
