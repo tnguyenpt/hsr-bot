@@ -1,0 +1,39 @@
+app:
+  name: hsr-bot
+  mode: launch_mvp
+  screenshot_dir: artifacts/screenshots
+  log_file: logs/hsr-bot.log
+
+timeouts:
+  launcher_visible_sec: 30
+  login_complete_sec: 45
+  game_start_sec: 120
+
+retry:
+  template_poll_interval_sec: 1.0
+
+templates:
+  base_dir: /mnt/c/Users/Clawed/Pictures/hsr-templates
+  hoyoplay_launcher: hoyoplay_launcher.png
+  hoyoplay_start_button: hoyoplay_launcher_start_button.png
+  saved_info_login: saved_info_login_screen.png
+  hsr_login: honkai_star_rail_login_screen.png
+  hsr_start_1: honkai_star_rail_start_screen.png
+  hsr_start_2: honkai_star_rail_second_start_screen.png
+  game_default: default_game_screen.png
+
+match_thresholds:
+  ui_screen: 0.86
+  ui_button: 0.80
+
+windows:
+  launcher_title_hint: HoYoPlay
+  game_process_name: StarRail.exe
+
+launch:
+  launcher_exe: 'C:\Program Files\HoYoPlay\launcher.exe'
+  hold_alt_before_in_game_clicks: true
+
+telegram:
+  notify_on_success: true
+  notify_on_failure: true
