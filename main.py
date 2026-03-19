@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import logging
 import os
 import sys
 from datetime import datetime
 
-from missions.launch import run_launch_mvp, close_hsr_apps
-from telegram_bot.reporter import send_report
 from vision.utils import load_settings, ensure_dirs
 
 
@@ -23,6 +22,51 @@ def configure_logging(log_file: str) -> None:
     )
 
 
+def send_report_safe(settings: dict, message: str, ok: bool) -> None:
+    """Best-effort report sender that won't crash if telegram deps are missing."""
+    try:
+        from telegram_bot.reporter import send_report
+        send_report(settings, message, ok=ok)
+    except Exception:
+        logging.info("Report skipped (telegram module/env unavailable).")
+
+
+def preflight_check() -> tuple[bool, str]:
+    """Check required runtime modules before importing mission code."""
+    required = [
+        "pyautogui",
+        "cv2",
+        "numpy",
+        "yaml",
+        "PIL",
+    ]
+    missing = []
+    for mod in required:
+        try:
+            importlib.import_module(mod)
+        except Exception:
+            missing.append(mod)
+
+    if not missing:
+        return True, "Runtime dependencies OK"
+
+    pip_names = {
+        "pyautogui": "pyautogui",
+        "cv2": "opencv-python",
+        "numpy": "numpy",
+        "yaml": "PyYAML",
+        "PIL": "Pillow",
+    }
+    install_list = " ".join(pip_names[m] for m in missing)
+    guidance = (
+        "Missing Python modules: " + ", ".join(missing) + "\n"
+        "Install with:\n"
+        "  python -m pip install " + install_list + "\n"
+        "(or: pip install -r requirements.txt)"
+    )
+    return False, guidance
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="HSR Bot MVP")
     parser.add_argument("--run", default="launch_mvp", choices=["launch_mvp", "stage_a"])
@@ -32,6 +76,14 @@ def main() -> int:
     settings = load_settings("config/settings.yaml")
     ensure_dirs(settings)
     configure_logging(settings["app"]["log_file"])
+
+    ok_deps, preflight_msg = preflight_check()
+    if not ok_deps:
+        logging.error("Preflight failed:\n%s", preflight_msg)
+        send_report_safe(settings, f"HSR Preflight FAILED\n{preflight_msg}", ok=False)
+        return 2
+
+    from missions.launch import run_launch_mvp, close_hsr_apps
 
     logging.info("Starting %s", settings["app"]["name"])
     started = datetime.now()
@@ -46,7 +98,7 @@ def main() -> int:
             f"Duration: {duration}s\n"
             f"Summary: {summary}"
         )
-        send_report(settings, message, ok=ok)
+        send_report_safe(settings, message, ok=ok)
         if ok:
             logging.info("Run completed: %s", summary)
             return 0
@@ -101,7 +153,7 @@ def main() -> int:
         lines.extend(f"- {x}" for x in failures[:10])
 
     message = "\n".join(lines)
-    send_report(settings, message, ok=all_ok)
+    send_report_safe(settings, message, ok=all_ok)
 
     if all_ok:
         return 0
