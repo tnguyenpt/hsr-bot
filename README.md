@@ -1,22 +1,58 @@
-# hsr-bot (MVP: Launch + Login)
+# HSR Bot (Honkai Star Rail Automation)
 
-Phase 0.5 MVP for Honkai Star Rail automation.
+Windows automation bot for repeatable daily HSR tasks.
 
-## Current scope
-- Launch HoYoPlay
-- Detect launcher/login/game start screens via template matching
-- Perform login if needed (env-var credentials)
-- Click Start to launch HSR
-- Detect in-game landing screen
-- Send success/failure report to Telegram bot chat
+## Product Lens (PM framing)
 
-## Not in this MVP
-- Dispatch
-- Daily training
-- Farming
-- Full scheduler/state machine
+**Problem:** daily game maintenance tasks are repetitive and easy to miss.
 
-## Run
+**Who it's for:** players who want reliable daily routine execution with reporting.
+
+**Job to be done:** *"Run my daily routine at a scheduled time and tell me what happened."*
+
+**MVP Success Criteria (current phase):**
+- Launch HoYoPlay reliably
+- Handle login if prompted
+- Launch HSR and confirm game-ready state
+- Report success/failure
+
+## Current status
+
+This repo is in **Phase 0.5 MVP** (launch + login reliability).
+
+### Implemented
+- Launch HoYoPlay from configured path
+- Detect launcher/login/start/game screens via template matching
+- AHK-based input actions (click/type/key/hotkey)
+- ALT cursor unlock step
+- Failure screenshots + logs
+- Telegram status reporting
+
+### Planned (next phases)
+- Dispatch claim/resend
+- Daily training automation
+- Stamina farm loop (Build Target)
+- Full state machine scheduler
+
+## Architecture
+
+- **Python = brain** (state, vision, decisions)
+- **AutoHotkey = hands** (stateless UI input actions)
+- **OpenCV template matching** for screen state
+- **Telegram reporting** for run outcomes
+
+```text
+hsr-bot/
+├── main.py
+├── missions/launch.py
+├── vision/
+├── ahk/actions.ahk
+├── telegram_bot/reporter.py
+└── config/settings.yaml
+```
+
+## Run (MVP)
+
 ```bash
 cd /home/clawed/projects/hsr-bot
 python3 -m venv .venv
@@ -26,12 +62,22 @@ python main.py --run launch_mvp
 ```
 
 ## Environment variables
-- `HSR_USERNAME` (optional; only used if login screen appears)
-- `HSR_PASSWORD` (optional; only used if login screen appears)
-- `TELEGRAM_BOT_TOKEN` (optional but recommended)
-- `TELEGRAM_CHAT_ID` (optional; if omitted no Telegram message is sent)
 
-## Notes
-- Designed for Windows runtime.
-- Templates currently sourced from: `/mnt/c/Users/Clawed/Pictures/hsr-templates`
-- ALT cursor unlock step is included before in-game clicks.
+- `HSR_USERNAME` (optional; only if login prompt appears)
+- `HSR_PASSWORD` (optional; only if login prompt appears)
+- `TELEGRAM_BOT_TOKEN` (optional)
+- `TELEGRAM_CHAT_ID` (optional)
+- `AHK_EXE` (optional override for AutoHotkey executable path)
+
+## Tradeoffs
+
+- Prioritized robust launch/login over broad feature scope
+- Chose template-based detection over hardcoded coordinates
+- Deferred full gameplay automation until launch pipeline is stable
+
+## Next iteration (portfolio roadmap)
+
+- Expand to mission modules (dispatch/daily/farm)
+- Add deterministic dry-run mode
+- Harden retry/error-state behavior
+- Add nightly run telemetry summary
