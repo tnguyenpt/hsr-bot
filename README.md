@@ -75,6 +75,17 @@ python main.py --run launch_mvp
 - Chose template-based detection over hardcoded coordinates
 - Deferred full gameplay automation until launch pipeline is stable
 
+## Suggested screenshots (portfolio)
+
+Add these files under `docs/screenshots/`:
+
+- `launcher-detected.png`
+- `login-handled.png`
+- `game-ready-detected.png`
+- `telegram-report-example.png`
+
+When ready, they can be embedded directly in this README.
+
 ## Next iteration (portfolio roadmap)
 
 - Expand to mission modules (dispatch/daily/farm)
