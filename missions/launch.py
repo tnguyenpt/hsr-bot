@@ -111,7 +111,8 @@ def run_launch_mvp(settings: dict) -> tuple[bool, str]:
     except Exception as exc:
         return False, f"Failed to launch HoYoPlay: {exc}"
 
-    ok, _, conf = _wait_for_template(settings, "hoyoplay_launcher", ui_thr, int(settings["timeouts"]["launcher_visible_sec"]))
+    launcher_thr = float(settings.get("match_thresholds", {}).get("launcher_screen", ui_thr))
+    ok, _, conf = _wait_for_template(settings, "hoyoplay_launcher", launcher_thr, int(settings["timeouts"]["launcher_visible_sec"]))
     if not ok:
         timestamped_screenshot(screenshot_dir, "launcher-missing")
         return False, f"HoYoPlay launcher not detected (max conf={conf:.3f})"

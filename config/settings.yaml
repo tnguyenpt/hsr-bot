@@ -26,8 +26,11 @@ templates:
   game_default: default_game_screen.png
 
 match_thresholds:
+  # Global defaults
   ui_screen: 0.86
   ui_button: 0.80
+  # Stage A tuning (launcher is visually variant across updates/themes)
+  launcher_screen: 0.40
 
 windows:
   launcher_title_hint: HoYoPlay
